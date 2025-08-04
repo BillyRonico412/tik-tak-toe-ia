@@ -1,20 +1,14 @@
 import { atom } from "jotai"
+import { atomEffect } from "jotai-effect"
+import { type PlayerType, tikTakToe } from "@/lib/tikTakToe"
 
-const Empty = 0
-const Player1 = 1
-const Player2 = 2
-
-type PlayerType = typeof Player1 | typeof Player2
-type CellValueType = PlayerType | 0
-
-const boardAtom = atom(Uint8Array.from(Array.from({ length: 9 }, () => Empty)))
-const currentPlayerAtom = atom<PlayerType>(Player1)
-
-const getCellValue = (board: Uint8Array, index: number): CellValueType => {
-	return board[index] as CellValueType
-}
-
+const boardAtom = atom(
+	Uint8Array.from(Array.from({ length: 9 }, () => tikTakToe.Empty)),
+)
+const currentPlayerAtom = atom<PlayerType>(tikTakToe.Player1)
+const lastIndexAtom = atom(-1)
 const playMoveAtom = atom(null, (get, set, params: { index: number }) => {
+	clearTimeout(aiTimeout)
 	const [winner] = get(winAtom)
 	if (winner) {
 		return
@@ -22,51 +16,52 @@ const playMoveAtom = atom(null, (get, set, params: { index: number }) => {
 	const board = get(boardAtom)
 	const newBoard = new Uint8Array(board)
 	const currentPlayer = get(currentPlayerAtom)
+	const cellValue = tikTakToe.getCellValue(board, params.index)
+	if (cellValue !== tikTakToe.Empty) {
+		return
+	}
 	newBoard[params.index] = currentPlayer
+	set(lastIndexAtom, params.index)
 	set(boardAtom, newBoard)
-	set(currentPlayerAtom, currentPlayer === Player1 ? 0b10 : Player1)
+	set(
+		currentPlayerAtom,
+		currentPlayer === tikTakToe.Player1 ? 0b10 : tikTakToe.Player1,
+	)
 })
 const resetGameAtom = atom(null, (_, set) => {
-	set(boardAtom, Uint8Array.from(Array.from({ length: 9 }, () => Empty)))
-	set(currentPlayerAtom, Player1)
+	set(
+		boardAtom,
+		Uint8Array.from(Array.from({ length: 9 }, () => tikTakToe.Empty)),
+	)
+	set(currentPlayerAtom, tikTakToe.Player1)
 })
-
-const getWin = (board: Uint8Array): [CellValueType, index: Uint8Array] => {
-	const winningCombinations = [
-		[0, 1, 2], // Row 1
-		[3, 4, 5], // Row 2
-		[6, 7, 8], // Row 3
-		[0, 3, 6], // Column 1
-		[1, 4, 7], // Column 2
-		[2, 5, 8], // Column 3
-		[0, 4, 8], // Diagonal \
-		[2, 4, 6], // Diagonal /
-	] as const
-
-	for (const combination of winningCombinations) {
-		const [indexA, indexB, indexC] = combination
-		const valueA = getCellValue(board, indexA)
-		const valueB = getCellValue(board, indexB)
-		const valueC = getCellValue(board, indexC)
-
-		if (valueA !== 0 && valueA === valueB && valueA === valueC) {
-			return [valueA, new Uint8Array(combination)]
-		}
-	}
-	return [0 as PlayerType, new Uint8Array()]
-}
 
 const winAtom = atom((get) => {
-	return getWin(get(boardAtom))
+	return tikTakToe.getWin(get(boardAtom))
+})
+let aiTimeout = 0
+const aiPlayMoveEffect = atomEffect((get, set) => {
+	if (get(currentPlayerAtom) !== tikTakToe.Player2) {
+		return
+	}
+	const board = get.peek(boardAtom)
+	const bestMoveIndex = tikTakToe.getBestMoveIndex(board)
+	console.log("AI playing move at index:", bestMoveIndex)
+	aiTimeout = window.setTimeout(() => {
+		set(playMoveAtom, { index: bestMoveIndex })
+	}, 500)
+	return () => {
+		window.clearTimeout(aiTimeout)
+		aiTimeout = 0
+	}
 })
 
-export const tikTakToe = {
+export const atoms = {
 	boardAtom,
 	currentPlayerAtom,
 	playMoveAtom,
 	resetGameAtom,
 	winAtom,
-	getCellValue,
-	Player1,
-	Player2,
+	lastIndexAtom,
+	aiPlayMoveEffect,
 }

@@ -1,9 +1,10 @@
 import { useAtomValue } from "jotai"
-import { tikTakToe } from "@/lib/atom"
+import { atoms } from "@/lib/atom"
+import { tikTakToe } from "@/lib/tikTakToe"
 
 export const CurrentPlayer = () => {
-	const currentPlayer = useAtomValue(tikTakToe.currentPlayerAtom)
-	const [winner] = useAtomValue(tikTakToe.winAtom)
+	const currentPlayer = useAtomValue(atoms.currentPlayerAtom)
+	const [winner] = useAtomValue(atoms.winAtom)
 	if (!winner) {
 		return (
 			<div className="font-medium text-lg">
