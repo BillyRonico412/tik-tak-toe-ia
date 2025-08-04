@@ -51,7 +51,18 @@ const getDepth = (node: Node): number => {
 }
 
 const getBestMoveIndex = (board: Uint8Array): number => {
-	const nbEmptyCells = board.filter((cell) => cell === Empty).length
+	const emptyIndices: Uint8Array = new Uint8Array(board.length)
+	for (let i = 0; i < board.length; i++) {
+		if (board[i] === Empty) {
+			emptyIndices[i] = 1
+		}
+	}
+	let nbEmptyCells = 0
+	for (let i = 0; i < emptyIndices.length; i++) {
+		if (emptyIndices[i] === 1) {
+			nbEmptyCells++
+		}
+	}
 	const root: Node = {
 		board,
 		children: [],
