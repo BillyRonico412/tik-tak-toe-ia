@@ -9,7 +9,7 @@ const currentPlayerAtom = atom<PlayerType>(tikTakToe.Player1)
 const lastIndexAtom = atom(-1)
 const playMoveAtom = atom(null, (get, set, params: { index: number }) => {
 	clearTimeout(aiTimeout)
-	const [winner] = get(winAtom)
+	const { winner } = get(winAtom)
 	if (winner) {
 		return
 	}
@@ -33,7 +33,17 @@ const resetGameAtom = atom(null, (_, set) => {
 		boardAtom,
 		Uint8Array.from(Array.from({ length: 9 }, () => tikTakToe.Empty)),
 	)
-	set(currentPlayerAtom, tikTakToe.Player1)
+	set(currentPlayerAtom, (lastPlayer) => {
+		if (lastPlayer === tikTakToe.Player1) {
+			return tikTakToe.Player2
+		}
+		return tikTakToe.Player1
+	})
+})
+
+const isDrawAtom = atom((get) => {
+	const board = get(boardAtom)
+	return tikTakToe.isDraw(board) && get(winAtom).winner === tikTakToe.Empty
 })
 
 const winAtom = atom((get) => {
@@ -63,4 +73,5 @@ export const atoms = {
 	winAtom,
 	lastIndexAtom,
 	aiPlayMoveEffect,
+	isDrawAtom,
 }

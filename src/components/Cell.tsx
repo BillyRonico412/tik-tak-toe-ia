@@ -9,7 +9,7 @@ export const Cell = (props: { index: number }) => {
 	const cellValue = tikTakToe.getCellValue(board, props.index)
 	const currentPlayer = useAtomValue(atoms.currentPlayerAtom)
 	const lastIndex = useAtomValue(atoms.lastIndexAtom)
-	const [winner, winningCombination] = useAtomValue(atoms.winAtom)
+	const { winner, winningCombination } = useAtomValue(atoms.winAtom)
 	const isCellWinning = winningCombination.includes(props.index)
 
 	let cellSymbol: string | null = null

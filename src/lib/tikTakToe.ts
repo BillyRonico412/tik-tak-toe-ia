@@ -9,9 +9,16 @@ const getCellValue = (board: Uint8Array, index: number): CellValueType => {
 	return board[index] as CellValueType
 }
 
+const isDraw = (board: Uint8Array): boolean => {
+	return !board.includes(Empty) && getWin(board).winner === Empty
+}
+
 const getWin = (
 	board: Uint8Array,
-): [winner: CellValueType, indices: Uint8Array] => {
+): {
+	winner: CellValueType
+	winningCombination: Uint8Array
+} => {
 	const winningCombinations = [
 		[0, 1, 2], // Row 1
 		[3, 4, 5], // Row 2
@@ -29,11 +36,17 @@ const getWin = (
 		const valueB = getCellValue(board, indexB)
 		const valueC = getCellValue(board, indexC)
 
-		if (valueA !== 0 && valueA === valueB && valueA === valueC) {
-			return [valueA, new Uint8Array(combination)]
+		if (valueA !== Empty && valueA === valueB && valueA === valueC) {
+			return {
+				winner: valueA,
+				winningCombination: new Uint8Array(combination),
+			}
 		}
 	}
-	return [0 as PlayerType, new Uint8Array()]
+	return {
+		winner: Empty,
+		winningCombination: new Uint8Array(),
+	}
 }
 
 type Node = {
@@ -70,7 +83,7 @@ const getBestMoveIndex = (board: Uint8Array): number => {
 		weight: 0,
 	}
 	const genChildren = (node: Node, player: PlayerType): void => {
-		const [winner] = getWin(node.board)
+		const { winner } = getWin(node.board)
 		if (winner === Player1 || winner === Player2) {
 			return
 		}
@@ -93,7 +106,7 @@ const getBestMoveIndex = (board: Uint8Array): number => {
 	genChildren(root, Player2)
 	const genWeight = (node: Node, player: PlayerType) => {
 		if (node.children.length === 0) {
-			const [winner] = getWin(node.board)
+			const { winner } = getWin(node.board)
 			if (winner === Player2) {
 				node.weight = nbEmptyCells - getDepth(node) + 1
 			} else if (winner === Player1) {
@@ -135,4 +148,5 @@ export const tikTakToe = {
 	getCellValue,
 	getWin,
 	getBestMoveIndex,
+	isDraw,
 }

@@ -4,7 +4,11 @@ import { tikTakToe } from "@/lib/tikTakToe"
 
 export const CurrentPlayer = () => {
 	const currentPlayer = useAtomValue(atoms.currentPlayerAtom)
-	const [winner] = useAtomValue(atoms.winAtom)
+	const { winner } = useAtomValue(atoms.winAtom)
+	const isDraw = useAtomValue(atoms.isDrawAtom)
+	if (isDraw) {
+		return <div className="font-medium text-lg">It's a draw!</div>
+	}
 	if (!winner) {
 		return (
 			<div className="font-medium text-lg">
