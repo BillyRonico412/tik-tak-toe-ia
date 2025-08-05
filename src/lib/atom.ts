@@ -46,7 +46,6 @@ const aiPlayMoveEffect = atomEffect((get, set) => {
 	}
 	const board = get.peek(boardAtom)
 	const bestMoveIndex = tikTakToe.getBestMoveIndex(board)
-	console.log("AI playing move at index:", bestMoveIndex)
 	aiTimeout = window.setTimeout(() => {
 		set(playMoveAtom, { index: bestMoveIndex })
 	}, 500)

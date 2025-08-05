@@ -95,9 +95,9 @@ const getBestMoveIndex = (board: Uint8Array): number => {
 		if (node.children.length === 0) {
 			const [winner] = getWin(node.board)
 			if (winner === Player2) {
-				node.weight = nbEmptyCells - getDepth(node)
+				node.weight = nbEmptyCells - getDepth(node) + 1
 			} else if (winner === Player1) {
-				node.weight = -(nbEmptyCells - getDepth(node))
+				node.weight = -(nbEmptyCells - getDepth(node)) + 1
 			} else {
 				node.weight = 0
 			}
