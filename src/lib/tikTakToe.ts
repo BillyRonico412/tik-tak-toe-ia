@@ -1,9 +1,15 @@
 const Empty = 0 as const
 const Player1 = 1 as const
 const Player2 = 2 as const
+const Size = 3 as const
+const NbCells = Size * Size
 
 export type PlayerType = typeof Player1 | typeof Player2
 export type CellValueType = PlayerType | 0
+
+const oppositePlayer = (player: PlayerType): PlayerType => {
+	return player === Player1 ? Player2 : Player1
+}
 
 const getCellValue = (board: Uint8Array, index: number): CellValueType => {
 	return board[index] as CellValueType
@@ -19,16 +25,47 @@ const getWin = (
 	winner: CellValueType
 	winningCombination: Uint8Array
 } => {
-	const winningCombinations = [
-		[0, 1, 2], // Row 1
-		[3, 4, 5], // Row 2
-		[6, 7, 8], // Row 3
-		[0, 3, 6], // Column 1
-		[1, 4, 7], // Column 2
-		[2, 5, 8], // Column 3
-		[0, 4, 8], // Diagonal \
-		[2, 4, 6], // Diagonal /
-	] as const
+	const winningCombinations: Uint8Array[] = []
+	for (let i = 0; i < Size; i++) {
+		for (let j = 0; j < Size; j++) {
+			if (i + 2 < Size) {
+				winningCombinations.push(
+					new Uint8Array([
+						i * Size + j,
+						(i + 1) * Size + j,
+						(i + 2) * Size + j,
+					]),
+				) // Vertical
+			}
+			if (j + 2 < Size) {
+				winningCombinations.push(
+					new Uint8Array([
+						i * Size + j,
+						i * Size + (j + 1),
+						i * Size + (j + 2),
+					]),
+				) // Horizontal
+			}
+			if (i + 2 < Size && j + 2 < Size) {
+				winningCombinations.push(
+					new Uint8Array([
+						i * Size + j,
+						(i + 1) * Size + (j + 1),
+						(i + 2) * Size + (j + 2),
+					]),
+				) // Diagonal \
+			}
+			if (i + 2 < Size && j - 2 >= 0) {
+				winningCombinations.push(
+					new Uint8Array([
+						i * Size + j,
+						(i + 1) * Size + (j - 1),
+						(i + 2) * Size + (j - 2),
+					]),
+				) // Diagonal /
+			}
+		}
+	}
 
 	for (const combination of winningCombinations) {
 		const [indexA, indexB, indexC] = combination
@@ -76,15 +113,29 @@ const getBestMoveIndex = (board: Uint8Array): number => {
 			nbEmptyCells++
 		}
 	}
+	const maxDepth = Math.min(3, nbEmptyCells)
 	const root: Node = {
 		board,
 		children: [],
 		parent: undefined,
 		weight: 0,
 	}
-	const genChildren = (node: Node, player: PlayerType): void => {
+	const minimax = (
+		node: Node,
+		currentPlayer: PlayerType,
+		depth: number,
+	): void => {
 		const { winner } = getWin(node.board)
-		if (winner === Player1 || winner === Player2) {
+		if (winner === Player1) {
+			node.weight = -(nbEmptyCells - getDepth(node) + 1)
+			return
+		}
+		if (winner === Player2) {
+			node.weight = nbEmptyCells - getDepth(node) + 1
+			return
+		}
+		if (depth === 0) {
+			node.weight = 0
 			return
 		}
 		for (let i = 0; i < node.board.length; i++) {
@@ -92,40 +143,28 @@ const getBestMoveIndex = (board: Uint8Array): number => {
 				continue
 			}
 			const newBoard = new Uint8Array(node.board)
-			newBoard[i] = player
+			newBoard[i] = currentPlayer
 			const childNode: Node = {
 				board: newBoard,
 				children: [],
 				parent: node,
 				weight: 0,
 			}
-			genChildren(childNode, player === Player1 ? Player2 : Player1)
+			minimax(childNode, oppositePlayer(currentPlayer), depth - 1)
 			node.children.push(childNode)
 		}
-	}
-	genChildren(root, Player2)
-	const genWeight = (node: Node, player: PlayerType) => {
 		if (node.children.length === 0) {
-			const { winner } = getWin(node.board)
-			if (winner === Player2) {
-				node.weight = nbEmptyCells - getDepth(node) + 1
-			} else if (winner === Player1) {
-				node.weight = -(nbEmptyCells - getDepth(node)) - 1
-			} else {
-				node.weight = 0
-			}
-			return node
+			node.weight = 0
+			return
 		}
-		for (const child of node.children) {
-			genWeight(child, player === Player1 ? Player2 : Player1)
-		}
-		if (player === Player2) {
+		if (currentPlayer === Player2) {
 			node.weight = Math.max(...node.children.map((c) => c.weight))
 		} else {
 			node.weight = Math.min(...node.children.map((c) => c.weight))
 		}
 	}
-	genWeight(root, Player2)
+	minimax(root, Player2, maxDepth)
+	console.log(root)
 	const bestMoves = root.children.filter(
 		(child) => child.weight === root.weight,
 	)
@@ -142,6 +181,8 @@ const getBestMoveIndex = (board: Uint8Array): number => {
 }
 
 export const tikTakToe = {
+	Size,
+	NbCells,
 	Empty,
 	Player1,
 	Player2,

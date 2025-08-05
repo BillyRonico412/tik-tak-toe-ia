@@ -3,8 +3,11 @@ import { atomEffect } from "jotai-effect"
 import { type PlayerType, tikTakToe } from "@/lib/tikTakToe"
 
 const boardAtom = atom(
-	Uint8Array.from(Array.from({ length: 9 }, () => tikTakToe.Empty)),
+	Uint8Array.from(
+		Array.from({ length: tikTakToe.NbCells }, () => tikTakToe.Empty),
+	),
 )
+const startingPlayer = atom<PlayerType>(tikTakToe.Player1)
 const currentPlayerAtom = atom<PlayerType>(tikTakToe.Player1)
 const lastIndexAtom = atom(-1)
 const playMoveAtom = atom(null, (get, set, params: { index: number }) => {
@@ -28,17 +31,21 @@ const playMoveAtom = atom(null, (get, set, params: { index: number }) => {
 		currentPlayer === tikTakToe.Player1 ? 0b10 : tikTakToe.Player1,
 	)
 })
-const resetGameAtom = atom(null, (_, set) => {
+const resetGameAtom = atom(null, (get, set) => {
 	set(
 		boardAtom,
-		Uint8Array.from(Array.from({ length: 9 }, () => tikTakToe.Empty)),
+		Uint8Array.from(
+			Array.from({ length: tikTakToe.NbCells }, () => tikTakToe.Empty),
+		),
 	)
-	set(currentPlayerAtom, (lastPlayer) => {
-		if (lastPlayer === tikTakToe.Player1) {
-			return tikTakToe.Player2
-		}
-		return tikTakToe.Player1
-	})
+	if (get(startingPlayer) === tikTakToe.Player1) {
+		set(currentPlayerAtom, tikTakToe.Player2)
+		set(startingPlayer, tikTakToe.Player2)
+	} else {
+		set(currentPlayerAtom, tikTakToe.Player1)
+		set(startingPlayer, tikTakToe.Player1)
+	}
+	set(lastIndexAtom, -1)
 })
 
 const isDrawAtom = atom((get) => {
@@ -54,7 +61,7 @@ const aiPlayMoveEffect = atomEffect((get, set) => {
 	if (get(currentPlayerAtom) !== tikTakToe.Player2) {
 		return
 	}
-	const board = get.peek(boardAtom)
+	const board = get(boardAtom)
 	const bestMoveIndex = tikTakToe.getBestMoveIndex(board)
 	aiTimeout = window.setTimeout(() => {
 		set(playMoveAtom, { index: bestMoveIndex })

@@ -12,6 +12,20 @@ export const App = () => {
 			<CurrentPlayer />
 			<Board />
 			<ResetButton />
+			<div className="flex flex-col items-center gap-2 fixed bottom-0 left-0 right-0 p-4">
+				<p>Made by Ronico BILLY.</p>
+				<p>
+					Code on:{" "}
+					<a
+						href="https://github.com/BillyRonico412/tik-tak-toe-ia"
+						target="_blank"
+						rel="noopener noreferrer"
+						className="text-blue-500 hover:underline"
+					>
+						GitHub
+					</a>
+				</p>
+			</div>
 		</div>
 	)
 }
